@@ -3,25 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Click Tracker Widget</title>
+  <title>Sketchy Tracker</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
-      text-align: center;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #c7cfd9; /* Light grey-blue background */
     }
     .button {
       padding: 10px 20px;
       font-size: 16px;
       color: white;
-      background-color: #007BFF;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
+    .button.default {
+      background-color: #28a745; /* Green for available */
+    }
+    .button.occupied {
+      background-color: #dc3545; /* Red for occupied */
+    }
     .button:hover {
-      background-color: #0056b3;
+      filter: brightness(90%);
     }
     #log {
       margin-top: 20px;
@@ -31,6 +39,7 @@
       max-width: 400px;
       margin-left: auto;
       margin-right: auto;
+      background-color: #ffffff; /* White log background */
     }
     .log-item {
       margin: 5px 0;
@@ -38,45 +47,57 @@
   </style>
 </head>
 <body>
-  <h1>Sketchy Tracker</h1>
-  <button class="button" onclick="logClick()">Log-in</button>
-
-  <div id="log">
-    <h2>Watch Log</h2>
-    <div id="logEntries"></div>
+  <div>
+    <button id="statusButton" class="button default" onclick="toggleLogin()">Click Me</button>
+    <div id="log">
+      <h2>Click Log</h2>
+      <div id="logEntries"></div>
+    </div>
   </div>
 
   <script>
-    function logClick() {
-      // Ask for the user's name (simulated user input)
-      const userName = prompt("Enter your name:");
-      if (!userName) {
-        alert("Name is required to log the click.");
-        return;
+    let isOccupied = false; // Track whether the button is "occupied"
+
+    function toggleLogin() {
+      const button = document.getElementById("statusButton");
+
+      if (!isOccupied) {
+        // "Log in" logic
+        const userName = prompt("Name?");
+        if (!userName) {
+          alert("Name is required to log in.");
+          return;
+        }
+
+        const now = new Date();
+        const timeString = now.toLocaleString();
+
+        // Update button state
+        button.textContent = "Occupied";
+        button.classList.remove("default");
+        button.classList.add("occupied");
+
+        // Log the event
+        const logEntries = document.getElementById("logEntries");
+        const logItem = document.createElement("div");
+        logItem.className = "log-item";
+        logItem.innerHTML = `
+          <strong>${userName}</strong> started watching Sketchy at <em>${timeString}</em>
+        `;
+        logEntries.prepend(logItem);
+
+        // Set the occupied state
+        isOccupied = true;
+      } else {
+        // "Log out" logic
+        button.textContent = "Watching";
+        button.classList.remove("occupied");
+        button.classList.add("default");
+        alert("Sketchy is now available.");
+
+        // Clear the occupied state
+        isOccupied = false;
       }
-
-      // Ask for comment
-      const userComment = prompt("You know how long you'll be on? (optional):");
-
-      // Get the current time
-      const now = new Date();
-      const timeString = now.toLocaleString();
-
-
-      // Create a log entry
-      const logEntries = document.getElementById("logEntries");
-      const logItem = document.createElement("div");
-      logItem.className = "log-item";
-  
-
-      // Construct the log text
-      logItem.innerHTML = 
-        <strong>${userName}</strong> started watching Sketchy at <en>${timeString}</em><br>
-        Note: ${userComment ? userComment : " "}
-      ;
-
-      // Add the log entry to the log
-      logEntries.prepend(logItem);
     }
   </script>
 </body>
