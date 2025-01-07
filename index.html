@@ -6,66 +6,86 @@
   <title>Sketchy Tracker</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
       margin: 0;
       height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      background-color: #c7cfd9; /* Light grey-blue background */
+      background-color: #ffe4e1; /* Light pink background */
+      color: #333;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      color: #ff69b4; /* Hot pink */
     }
     .button {
-      padding: 10px 20px;
-      font-size: 16px;
+      padding: 15px 30px;
+      font-size: 1.2rem;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 10px;
       cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.2s, background-color 0.3s;
     }
     .button.default {
-      background-color: #28a745; /* Green for available */
+      background-color: #98fb98; /* Pale green for available */
     }
     .button.occupied {
-      background-color: #dc3545; /* Red for occupied */
+      background-color: #ff6347; /* Tomato red for occupied */
     }
     .button:hover {
-      filter: brightness(90%);
+      transform: scale(1.1);
     }
     #log {
       margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      padding: 20px;
+      border: 2px dashed #ffb6c1; /* Light pink border */
+      border-radius: 10px;
       max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-      background-color: #ffffff; /* White log background */
+      background-color: rgba(255, 255, 255, 0.8); /* Transparent white */
     }
     .log-item {
-      margin: 5px 0;
+      margin: 10px 0;
+      font-size: 1rem;
+      color: #444;
+    }
+    .popup {
+      font-size: 1rem;
+      background-color: #ffdab9; /* Peach puff */
+      color: #333;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
 <body>
+  <h1>Sketchy Tracker</h1>
   <div>
     <button id="statusButton" class="button default" onclick="toggleLogin()">Click Me</button>
     <div id="log">
-      <h2>Click Log</h2>
+      <h2>Activity Log</h2>
       <div id="logEntries"></div>
     </div>
   </div>
 
   <script>
     let isOccupied = false; // Track whether the button is "occupied"
+    let timeoutHandle = null; // Track the timeout
 
     function toggleLogin() {
       const button = document.getElementById("statusButton");
+      const logEntries = document.getElementById("logEntries");
 
       if (!isOccupied) {
         // "Log in" logic
-        const userName = prompt("Name?");
+        const userName = prompt("What's your name? (Required to log in)");
         if (!userName) {
-          alert("Name is required to log in.");
+          alert("Name is required to log in. Please try again.");
           return;
         }
 
@@ -78,7 +98,6 @@
         button.classList.add("occupied");
 
         // Log the event
-        const logEntries = document.getElementById("logEntries");
         const logItem = document.createElement("div");
         logItem.className = "log-item";
         logItem.innerHTML = `
@@ -86,17 +105,60 @@
         `;
         logEntries.prepend(logItem);
 
+        // Alert about auto-logout
+        alert("You will be automatically logged out after 60 minutes.");
+
         // Set the occupied state
         isOccupied = true;
+
+        // Set a timeout to clear the state after 60 minutes (3600000 ms)
+        timeoutHandle = setTimeout(() => {
+          autoLogout(userName);
+        }, 3600000);
       } else {
         // "Log out" logic
-        button.textContent = "Watching";
-        button.classList.remove("occupied");
-        button.classList.add("default");
-        alert("Sketchy is now available.");
+        clearState();
+      }
+    }
 
-        // Clear the occupied state
-        isOccupied = false;
+    function autoLogout(userName) {
+      const logEntries = document.getElementById("logEntries");
+      const now = new Date();
+      const timeString = now.toLocaleString();
+
+      // Log the auto-logout event
+      const logItem = document.createElement("div");
+      logItem.className = "log-item";
+      logItem.innerHTML = `
+        <strong>${userName}</strong> was automatically logged out at <em>${timeString}</em>
+      `;
+      logEntries.prepend(logItem);
+
+      // Clear the state
+      clearState(false); // Do not clear the log when auto-logging out
+    }
+
+    function clearState(clearLog = true) {
+      const button = document.getElementById("statusButton");
+      const logEntries = document.getElementById("logEntries");
+
+      // Reset button state
+      button.textContent = "Click Me";
+      button.classList.remove("occupied");
+      button.classList.add("default");
+
+      // Clear the log if specified
+      if (clearLog) {
+        logEntries.innerHTML = "";
+      }
+
+      // Clear the occupied state
+      isOccupied = false;
+
+      // Clear any existing timeout
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+        timeoutHandle = null;
       }
     }
   </script>
