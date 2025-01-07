@@ -38,11 +38,11 @@
   </style>
 </head>
 <body>
-  <h1>Click Tracker Widget</h1>
-  <button class="button" onclick="logClick()">Click Me</button>
+  <h1>Sketchy Tracker</h1>
+  <button class="button" onclick="logClick()">Log-in</button>
 
   <div id="log">
-    <h2>Click Log</h2>
+    <h2>Watch Log</h2>
     <div id="logEntries"></div>
   </div>
 
@@ -55,15 +55,25 @@
         return;
       }
 
+      // Ask for comment
+      const userComment = prompt("You know how long you'll be on? (optional):");
+
       // Get the current time
       const now = new Date();
       const timeString = now.toLocaleString();
+
 
       // Create a log entry
       const logEntries = document.getElementById("logEntries");
       const logItem = document.createElement("div");
       logItem.className = "log-item";
-      logItem.textContent = `${userName} clicked the button at ${timeString}`;
+  
+
+      // Construct the log text
+      logItem.innerHTML = 
+        <strong>${userName}</strong> started watching Sketchy at <en>${timeString}</em><br>
+        Note: ${userComment ? userComment : " "}
+      ;
 
       // Add the log entry to the log
       logEntries.prepend(logItem);
