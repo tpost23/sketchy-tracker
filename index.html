@@ -54,20 +54,12 @@
       font-size: 0.95rem;
       color: #5a5a5a;
     }
-    .popup {
-      font-size: 1rem;
-      background-color: #f3e7dd; /* Neutral peachy-beige */
-      color: #4a4a4a;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-    }
   </style>
 </head>
 <body>
   <h1>Sketchy Tracker</h1>
   <div>
-    <button id="statusButton" class="button default" onclick="toggleLogin()">Click Me</button>
+    <button id="statusButton" class="button default" onclick="toggleLogin()">Check In</button>
     <div id="log">
       <h2>Activity Log</h2>
       <div id="logEntries"></div>
@@ -75,91 +67,56 @@
   </div>
 
   <script>
-    let isOccupied = false; // Track whether the button is "occupied"
-    let timeoutHandle = null; // Track the timeout
+    const ws = new WebSocket('ws://localhost:3000'); // Update this URL to match your backend deployment
 
+    // Listen for updates from the server
+    ws.onmessage = (event) => {
+      const trackerState = JSON.parse(event.data);
+      updateUI(trackerState);
+    };
+
+    // Update the UI based on tracker state
+    function updateUI(state) {
+      const button = document.getElementById('statusButton');
+      const logEntries = document.getElementById('logEntries');
+
+      if (state.isOccupied) {
+        button.textContent = 'Occupied';
+        button.classList.remove('default');
+        button.classList.add('occupied');
+        logEntries.innerHTML = `
+          <div class="log-item">
+            <strong>${state.userName}</strong> started watching Sketchy at <em>${state.time}</em>
+          </div>
+        `;
+      } else {
+        button.textContent = 'Check In';
+        button.classList.remove('occupied');
+        button.classList.add('default');
+        logEntries.innerHTML = '';
+      }
+    }
+
+    // Handle button clicks
     function toggleLogin() {
-      const button = document.getElementById("statusButton");
-      const logEntries = document.getElementById("logEntries");
+      const button = document.getElementById('statusButton');
 
-      if (!isOccupied) {
-        // "Log in" logic
-        const userName = prompt("Name?");
+      if (button.textContent === 'Check In') {
+        const userName = prompt("What's your name? (Required to log in)");
         if (!userName) {
-          alert("Bro, just put some letters...");
+          alert('Name is required to log in. Please try again.');
           return;
         }
-    
-        const now = new Date();
-        const timeString = now.toLocaleString();
 
-        // Update button state
-        button.textContent = "Occupied";
-        button.classList.remove("default");
-        button.classList.add("occupied");
+        const now = new Date().toLocaleString();
+        const newState = { isOccupied: true, userName, time: now };
 
-        // Log the event
-        const logItem = document.createElement("div");
-        logItem.className = "log-item";
-        logItem.innerHTML = `
-          <strong>${userName}</strong> started watching Sketchy at <em>${timeString}</em>
-        `;
-        logEntries.prepend(logItem);
-
-        // Alert about auto-logout
-        alert("You will be automatically logged out after 60 minutes.");
-
-        // Set the occupied state
-        isOccupied = true;
-
-        // Set a timeout to clear the state after 60 minutes (3600000 ms)
-        timeoutHandle = setTimeout(() => {
-          autoLogout(userName);
-        }, 3600000);
+        // Send the new state to the server
+        ws.send(JSON.stringify(newState));
       } else {
-        // "Log out" logic
-        clearState();
-      }
-    }
-
-    function autoLogout(userName) {
-      const logEntries = document.getElementById("logEntries");
-      const now = new Date();
-      const timeString = now.toLocaleString();
-
-      // Log the auto-logout event
-      const logItem = document.createElement("div");
-      logItem.className = "log-item";
-      logItem.innerHTML = `
-        <strong>${userName}</strong> was automatically logged out at <em>${timeString}</em>
-      `;
-      logEntries.prepend(logItem);
-
-      // Clear the state
-      clearState(false); // Do not clear the log when auto-logging out
-    }
-
-    function clearState(clearLog = true) {
-      const button = document.getElementById("statusButton");
-      const logEntries = document.getElementById("logEntries");
-
-      // Reset button state
-      button.textContent = "Click Me";
-      button.classList.remove("occupied");
-      button.classList.add("default");
-
-      // Clear the log if specified
-      if (clearLog) {
-        logEntries.innerHTML = "";
-      }
-
-      // Clear the occupied state
-      isOccupied = false;
-
-      // Clear any existing timeout
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
+        // Clear the tracker state
+        const newState = { isOccupied: false, userName: null, time: null };
+        ws.send(JSON.stringify(newState));
       }
     }
   </script>
